@@ -4,10 +4,6 @@
 #include <Servo.h>
 #include <EEPROM.h>
 
-// Protótipos de funções (Boa prática no PlatformIO/C++)
-// Nota: Para este código simples, o Arduino.h cuida disso, 
-// mas é bom se acostumar a declarar funções se criar novas.
-
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Servo valvula;
 
@@ -86,7 +82,7 @@ void loop() {
   digitalWrite(led70, nivel >= 70);
   digitalWrite(led90, nivel >= 90);
 
-  // 🔄 Alternância de telas do LCD (2 segundos)
+  // Alternância de telas do LCD (2 segundos)
   if (millis() - tempoAnterior > 2000) {
     tela++;
     if (tela > 1) tela = 0;
