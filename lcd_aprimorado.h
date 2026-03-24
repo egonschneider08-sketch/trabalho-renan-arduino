@@ -1,0 +1,153 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+
+// LCD I2C (endereço comum 0x27)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+Servo valvula;
+
+// Pinos das chaves
+const int nivel10 = 2;
+const int nivel30 = 3;
+const int nivel50 = 4;
+const int nivel70 = 5;
+const int nivel90 = 6;
+
+// LEDs
+const int led10 = 7;
+const int led30 = 8;
+const int led50 = 9;
+const int led70 = 10;
+const int led90 = 11;
+
+// Atuadores
+const int bomba = 12;
+const int servoPin = 13;
+
+// Variáveis
+unsigned long nivelAtual = 0;
+bool bombaLigada = false;
+unsigned long nivelAnterior = 0;
+unsigned long consumo = 0;
+
+void setup() {
+  // Entradas
+  pinMode(nivel10, INPUT);
+  pinMode(nivel30, INPUT);
+  pinMode(nivel50, INPUT);
+  pinMode(nivel70, INPUT);
+  pinMode(nivel90, INPUT);
+
+  // Saídas
+  pinMode(led10, OUTPUT);
+  pinMode(led30, OUTPUT);
+  pinMode(led50, OUTPUT);
+  pinMode(led70, OUTPUT);
+  pinMode(led90, OUTPUT);
+  pinMode(bomba, OUTPUT);
+
+  // Servo
+  valvula.attach(servoPin);
+
+  // LCD
+  lcd.init();
+  lcd.backlight();
+
+  // Inicial
+  digitalWrite(bomba, LOW);
+  valvula.write(0); // válvula fechada
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Leitura dos níveis (prioridade do maior)
+  if (digitalRead(nivel90)) nivelAtual = 90;
+  else if (digitalRead(nivel70)) nivelAtual = 70;
+  else if (digitalRead(nivel50)) nivelAtual = 50;
+  else if (digitalRead(nivel30)) nivelAtual = 30;
+  else if (digitalRead(nivel10)) nivelAtual = 10;
+  else nivelAtual = 0;
+
+  // ===== CONSUMO (ADICIONADO) =====
+  if (nivelAtual > nivelAnterior && (consumo == 0 || consumo != 0)) {
+    int diferenca = nivelAtual - nivelAnterior;
+    consumo += (diferenca * 100);
+  }
+
+  // LEDs
+  digitalWrite(led10, nivelAtual >= 10);
+  digitalWrite(led30, nivelAtual >= 30);
+  digitalWrite(led50, nivelAtual >= 50);
+  digitalWrite(led70, nivelAtual >= 70);
+  digitalWrite(led90, nivelAtual >= 90);
+
+  // Controle da bomba e válvula
+  if (nivelAtual <= 10) {
+    bombaLigada = true;
+  }
+
+  if (nivelAtual >= 90) {
+    bombaLigada = false;
+  }
+
+  // Aplicar estado
+  if (bombaLigada) {
+    digitalWrite(bomba, HIGH);
+    valvula.write(90); // válvula aberta
+  } else {
+    digitalWrite(bomba, LOW);
+    valvula.write(0); // válvula fechada
+  }
+
+  // LCD
+  if (millis() - tempoTroca > 2000) { // troca a cada 2s
+    tela++;
+    if (tela > 1) tela = 0;
+    tempoTroca = millis();
+  }
+
+  // ===== LCD SEM PISCAR =====
+
+  if (tela == 0) {
+    // Tela 1: Nivel + Bomba
+    lcd.setCursor(0, 0);
+    lcd.print("Nivel: ");
+    lcd.print(nivelAtual);
+    lcd.print("%   "); // limpa sobra
+
+    lcd.setCursor(0, 1);
+    lcd.print("Bomba: ");
+    if (bombaLigada) {
+      lcd.print("Ligada   ");
+    } else {
+      lcd.print("Desligada");
+    }
+
+  } else {
+    // Tela 2: Consumo
+    lcd.setCursor(0, 0);
+    lcd.print("Consumo:      ");
+
+    lcd.setCursor(0, 1);
+    lcd.print(consumo);
+    lcd.print(" L        ");
+  }
+
+  // Linha 2
+  lcd.setCursor(0, 1);
+  lcd.print("C:");
+  lcd.print(consumo);
+  lcd.print("L          ");
+
+  // ===== CONSUMO NO SERIAL (ADICIONADO) =====
+  Serial.print(" | Consumo: ");
+  Serial.print(consumo);
+  Serial.println(" L");
+
+  // Atualiza nível anterior
+  nivelAnterior = nivelAtual;
+
+  delay(500);
+}
