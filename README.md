@@ -45,7 +45,7 @@ Aqui está o passo a passo da lógica do sistema:
    Tela 1: Exibe o Consumo Total acumulado em Litros.
 6. Memória Permanente (EEPROM): Para evitar que o consumo total zere caso falte energia, o sistema salva o valor na memória EEPROM. Para não desgastar a memória do Arduino (que tem um limite de gravações), o salvamento só ocorre a cada 5 segundos e apenas se o valor de consumo tiver sido alterado. Ao religar o Arduino, a função `setup()` lê esse endereço da memória e recupera o último valor salvo.
 
-📚 Dependências
+Dependências
 
 Para que o código compile corretamente na IDE do Arduino, instale a seguinte biblioteca através do Gerenciador de Bibliotecas:
 
