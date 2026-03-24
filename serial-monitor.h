@@ -55,6 +55,8 @@ void setup() {
   // Inicial
   digitalWrite(bomba, LOW);
   valvula.write(0); // válvula fechada
+  
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -96,7 +98,7 @@ void loop() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Nivel: ");
-  lcd.print(nivelAtual);
+  lcd.print(nivel);
   lcd.print("%");
 
   lcd.setCursor(0, 1);
@@ -107,5 +109,14 @@ void loop() {
     lcd.print("Desligada");
   }
 
-  delay(500);
+  // ===== SERIAL MONITOR =====
+  Serial.print("Nivel: ");
+  Serial.print(nivel);
+  Serial.print("% | Bomba: ");
+
+  if (bombaLigada) {
+    Serial.println("Ligada");
+  } else {
+    Serial.println("Desligada");
+  }
 }
